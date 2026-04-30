@@ -125,7 +125,7 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
         banner_markup = f'<div class="banner banner-{banner_kind}">{escape(banner)}</div>'
 
     return f"""
-    <section class="detail-shell" hx-get="/ui/incidents/{detail["id"]}" hx-trigger="every 5s" hx-target="this" hx-swap="innerHTML">
+    <section class="detail-shell">
       {banner_markup}
       <header class="detail-summary">
         <div>
@@ -154,6 +154,15 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
           <input type="hidden" name="status" value="CLOSED">
           <button class="action-button" type="submit">Close Incident</button>
         </form>
+        <button
+          class="action-button secondary"
+          hx-get="/ui/incidents/{detail["id"]}"
+          hx-target="#detail-panel"
+          hx-swap="innerHTML"
+          type="button"
+        >
+          Refresh
+        </button>
       </section>
 
       <section class="detail-grid">

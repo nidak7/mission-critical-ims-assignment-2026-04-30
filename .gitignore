@@ -13,3 +13,4 @@ backend/storage/*.log
 backend/storage/raw/*.jsonl
 backend/storage/service-test-*/
 backend/storage/tmp*/
+*Infrastructure ∕ SRE Intern Assignment.pdf

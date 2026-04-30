@@ -1,19 +1,23 @@
 :root {
-  --bg: #f3f4f6;
-  --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --line: #d9dee7;
-  --text: #111827;
-  --text-muted: #5b6472;
-  --primary: #0f172a;
-  --p0: #b42318;
-  --p1: #c2410c;
-  --p2: #0369a1;
-  --p3: #475569;
-  --success-bg: #ecfdf3;
-  --success-text: #027a48;
-  --error-bg: #fef3f2;
-  --error-text: #b42318;
+  --bg: #050507;
+  --surface: #0d0d12;
+  --surface-2: #13131a;
+  --surface-3: #171721;
+  --line: rgba(189, 147, 249, 0.2);
+  --line-strong: rgba(189, 147, 249, 0.5);
+  --text: #f5f7ff;
+  --text-muted: #a6abc8;
+  --purple: #8b5cf6;
+  --purple-bright: #b794f6;
+  --purple-glow: rgba(139, 92, 246, 0.24);
+  --p0: #ff5d73;
+  --p1: #ff9a62;
+  --p2: #6bc7ff;
+  --p3: #93a0c8;
+  --success-bg: rgba(34, 197, 94, 0.12);
+  --success-text: #71f59b;
+  --error-bg: rgba(255, 93, 115, 0.12);
+  --error-text: #ff97a4;
 }
 
 * {
@@ -23,7 +27,10 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at top left, rgba(139, 92, 246, 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.1), transparent 24%),
+    linear-gradient(180deg, #030304 0%, #07070a 100%);
   color: var(--text);
   font-family: "Segoe UI", Tahoma, sans-serif;
 }
@@ -36,7 +43,7 @@ textarea {
 }
 
 .app-shell {
-  width: min(1280px, calc(100vw - 32px));
+  width: min(1320px, calc(100vw - 32px));
   margin: 0 auto;
   padding: 24px 0 32px;
 }
@@ -47,22 +54,23 @@ textarea {
 .detail-panel,
 .detail-section,
 .detail-summary {
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(16, 16, 22, 0.98), rgba(10, 10, 15, 0.98));
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 18px 40px rgba(0, 0, 0, 0.4);
 }
 
 .app-header {
-  padding: 20px 24px;
+  padding: 22px 24px;
   margin-bottom: 16px;
 }
 
 .kicker {
   margin: 0 0 6px;
-  color: var(--text-muted);
+  color: var(--purple-bright);
   font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -86,12 +94,14 @@ textarea {
 .muted,
 .signal-meta,
 .empty-detail p,
-.empty-state p {
+.empty-state p,
+.detail-summary p {
   color: var(--text-muted);
 }
 
 .header-note {
   margin: 0;
+  max-width: 70ch;
 }
 
 .stats-panel {
@@ -117,11 +127,12 @@ textarea {
 .metric-value {
   font-size: 1.75rem;
   font-weight: 700;
+  color: #ffffff;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: 360px minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -156,16 +167,18 @@ textarea {
   display: block;
   width: 100%;
   text-align: left;
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(25, 25, 34, 0.98), rgba(17, 17, 24, 0.98));
+  border: 1px solid rgba(189, 147, 249, 0.16);
   border-left-width: 4px;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 14px 14px 12px;
   cursor: pointer;
+  color: var(--text);
 }
 
 .incident-row:hover {
-  background: #f3f7fb;
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 1px rgba(189, 147, 249, 0.12), 0 0 24px rgba(139, 92, 246, 0.12);
 }
 
 .incident-row strong {
@@ -176,6 +189,7 @@ textarea {
 
 .incident-row p {
   margin: 0 0 8px;
+  color: var(--text);
 }
 
 .incident-row small {
@@ -217,8 +231,8 @@ textarea {
 .summary-item {
   min-width: 140px;
   padding: 10px 12px;
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
+  background: var(--surface-3);
+  border: 1px solid rgba(189, 147, 249, 0.16);
   border-radius: 10px;
 }
 
@@ -233,6 +247,7 @@ textarea {
 .summary-item dd {
   margin: 0;
   font-weight: 600;
+  color: #ffffff;
 }
 
 .status-actions {
@@ -247,26 +262,32 @@ textarea {
 
 .action-button,
 .primary-button {
-  border: 1px solid var(--primary);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
   padding: 10px 14px;
   cursor: pointer;
+  transition: box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
 }
 
 .action-button,
 .primary-button {
-  background: var(--primary);
+  background: rgba(139, 92, 246, 0.14);
   color: #ffffff;
 }
 
 .action-button.secondary {
-  background: #ffffff;
-  color: var(--primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.action-button:hover,
+.primary-button:hover {
+  border-color: var(--purple-bright);
+  box-shadow: 0 0 0 1px rgba(189, 147, 249, 0.2), 0 0 18px var(--purple-glow);
 }
 
 .detail-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
   gap: 16px;
 }
 
@@ -286,8 +307,8 @@ textarea {
 
 .signal-card {
   padding: 12px;
-  background: var(--surface-muted);
-  border: 1px solid var(--line);
+  background: var(--surface-3);
+  border: 1px solid rgba(189, 147, 249, 0.14);
   border-radius: 10px;
 }
 
@@ -327,10 +348,19 @@ textarea {
 .rca-form select,
 .rca-form textarea {
   width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
-  background: #ffffff;
+  border: 1px solid rgba(189, 147, 249, 0.26);
+  border-radius: 10px;
+  padding: 11px 12px;
+  background: #0c0c12;
+  color: #ffffff;
+  outline: none;
+}
+
+.rca-form input:focus,
+.rca-form select:focus,
+.rca-form textarea:focus {
+  border-color: var(--purple-bright);
+  box-shadow: 0 0 0 1px rgba(189, 147, 249, 0.32), 0 0 18px var(--purple-glow);
 }
 
 .banner {

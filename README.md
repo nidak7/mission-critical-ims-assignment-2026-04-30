@@ -1,35 +1,49 @@
 # Incident Management System
 
-Take-home assignment for the Infrastructure / SRE intern role.
+This repository contains my submission for the Infrastructure / SRE intern assignment.
 
-GitHub repo: [https://github.com/nidak7/mission-critical-ims-assignment-2026-04-30](https://github.com/nidak7/mission-critical-ims-assignment-2026-04-30)
+GitHub: [https://github.com/nidak7/mission-critical-ims-assignment-2026-04-30](https://github.com/nidak7/mission-critical-ims-assignment-2026-04-30)
 
-## What is included
+## Overview
 
-- `backend/` FastAPI app, workflow logic, storage, and tests
-- `frontend/` dashboard
-- `sample-data/` reset script and demo incident data
-- `docker-compose.yml` for local startup
+The project is a small Incident Management System built around three main ideas:
 
-## Main features
+- ingest signals asynchronously
+- group repeated signals from the same component into a single incident
+- drive the incident through a simple workflow until RCA is completed and the incident can be closed
 
-- async signal ingestion
-- debouncing by component
-- separate raw signal and incident/RCA storage
-- incident state flow: `OPEN -> INVESTIGATING -> RESOLVED -> CLOSED`
-- RCA required before close
-- simple dashboard for active incidents and RCA entry
+The application includes a backend API, a lightweight dashboard, sample data, tests, and local packaging through Docker Compose.
 
-## Run locally
+## Tech stack
+
+- FastAPI
+- asyncio
+- SQLite
+- HTMX
+
+## Repository structure
+
+- `backend/` application code, workflow logic, storage, and tests
+- `frontend/` dashboard assets
+- `sample-data/` demo/reset scripts
+- `docs/` supporting material, including the PDF generator
+
+## Running locally
+
+Start from a clean demo state:
 
 ```bash
 python sample-data/reset_demo_state.py
 python backend/run_server.py
 ```
 
-Open `http://localhost:8000`
+Then open:
 
-To load the demo incidents:
+```text
+http://localhost:8000
+```
+
+To load sample incidents:
 
 ```bash
 python sample-data/send_scenario.py
@@ -47,27 +61,30 @@ docker compose up --build
 python -m unittest backend.tests.test_rca_validation backend.tests.test_service_flow backend.tests.test_rate_limiter
 ```
 
-## Demo flow
+## Expected demo flow
 
 1. Open the dashboard.
 2. Select `RDBMS_PRIMARY_01`.
 3. Move it to `INVESTIGATING`.
 4. Move it to `RESOLVED`.
-5. Fill the RCA form.
+5. Fill in the RCA form.
 6. Close the incident.
 
-## Non-functional items
+## Non-functional work included
 
-- rate limiting on the ingestion API
+The assignment also asked for attention to operational concerns, so the following are included:
+
+- rate limiting on the ingestion endpoint
 - bounded async queue for backpressure
-- retry logic around database writes
+- retry logic for database writes
+- transactional status updates
 - `/health` endpoint
 - throughput logging every 5 seconds
-- transactional status updates
-- unit tests for RCA and service flow
+- unit tests for RCA validation, service flow, and rate limiting
 
 ## Notes
 
-- The app uses SQLite for structured data and JSONL files for raw signal storage.
-- The repo is public and contains the code, build scripts, and config needed to run the project.
-- A submission PDF can be generated with `python docs/generate_submission_pdf.py "Your Name"`.
+- Structured incident and RCA data are stored in SQLite.
+- Raw signal payloads are stored separately as JSONL files.
+- The repository is public and includes the code, config, and build scripts needed to run the project.
+- The submission PDF can be generated with `python docs/generate_submission_pdf.py "Your Name"`.
