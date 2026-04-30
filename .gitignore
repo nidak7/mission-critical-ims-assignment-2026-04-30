@@ -1,0 +1,14 @@
+.python_packages/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.DS_Store
+Thumbs.db
+backend/storage/*.db
+backend/storage/*.db-shm
+backend/storage/*.db-wal
+backend/storage/raw/*.jsonl
+backend/storage/service-test-*/
+backend/storage/tmp*/

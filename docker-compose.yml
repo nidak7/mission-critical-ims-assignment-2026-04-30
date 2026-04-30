@@ -1,0 +1,11 @@
+services:
+  ims:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/storage:/app/backend/storage
+    environment:
+      PYTHONUNBUFFERED: "1"

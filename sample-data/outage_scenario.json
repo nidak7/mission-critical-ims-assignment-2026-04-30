@@ -1,0 +1,42 @@
+[
+  {
+    "component_id": "RDBMS_PRIMARY_01",
+    "component_type": "RDBMS",
+    "signal_kind": "error",
+    "message": "Primary write node is refusing connections from the API pool.",
+    "metadata": {
+      "cluster": "orders-db",
+      "failure_code": "CONNECTION_REFUSED"
+    }
+  },
+  {
+    "component_id": "RDBMS_PRIMARY_01",
+    "component_type": "RDBMS",
+    "signal_kind": "latency",
+    "message": "P99 query latency has crossed 1900ms after failover started.",
+    "metadata": {
+      "cluster": "orders-db",
+      "latency_ms": 1900
+    }
+  },
+  {
+    "component_id": "MCP_HOST_02",
+    "component_type": "MCP_HOST",
+    "signal_kind": "error",
+    "message": "MCP host lost downstream database connectivity and is returning tool execution failures.",
+    "metadata": {
+      "service": "customer-resolution-host",
+      "failure_code": "DEPENDENCY_FAILURE"
+    }
+  },
+  {
+    "component_id": "CACHE_CLUSTER_01",
+    "component_type": "CACHE",
+    "signal_kind": "latency",
+    "message": "Redis cluster is timing out during read-through traffic spikes.",
+    "metadata": {
+      "region": "ap-south-1",
+      "latency_ms": 420
+    }
+  }
+]

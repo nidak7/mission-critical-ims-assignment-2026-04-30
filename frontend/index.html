@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mission-Critical IMS</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Mission-Critical Incident Management System</p>
+          <h1>Distributed stack control room</h1>
+        </div>
+        <div
+          class="overview-slot"
+          hx-get="/ui/overview"
+          hx-trigger="load, every 5s"
+          hx-target="this"
+          hx-swap="innerHTML"
+        ></div>
+      </header>
+
+      <main class="workspace">
+        <aside class="feed-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Live feed</p>
+              <h2>Active incidents</h2>
+            </div>
+            <span>Sorted by severity</span>
+          </div>
+          <div
+            class="feed-list"
+            hx-get="/ui/incidents"
+            hx-trigger="load, every 5s"
+            hx-target="this"
+            hx-swap="innerHTML"
+          ></div>
+        </aside>
+
+        <section id="detail-panel" class="detail-panel">
+          <div class="empty-detail">
+            <p>Select an incident from the live feed.</p>
+            <span>The RCA workflow and raw signal audit trail will appear here.</span>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
