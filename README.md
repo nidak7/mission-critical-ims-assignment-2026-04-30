@@ -87,4 +87,3 @@ The assignment also asked for attention to operational concerns, so the followin
 - Structured incident and RCA data are stored in SQLite.
 - Raw signal payloads are stored separately as JSONL files.
 - The repository is public and includes the code, config, and build scripts needed to run the project.
-- The submission PDF can be generated with `python docs/generate_submission_pdf.py "Your Name"`.
