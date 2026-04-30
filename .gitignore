@@ -9,6 +9,7 @@ Thumbs.db
 backend/storage/*.db
 backend/storage/*.db-shm
 backend/storage/*.db-wal
+backend/storage/*.log
 backend/storage/raw/*.jsonl
 backend/storage/service-test-*/
 backend/storage/tmp*/
