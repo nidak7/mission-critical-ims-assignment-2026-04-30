@@ -8,27 +8,27 @@
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   </head>
   <body>
-    <div class="shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Mission-Critical Incident Management System</p>
-          <h1>Distributed stack control room</h1>
-        </div>
-        <div
-          class="overview-slot"
-          hx-get="/ui/overview"
-          hx-trigger="load, every 5s"
-          hx-target="this"
-          hx-swap="innerHTML"
-        ></div>
+    <div class="app-shell">
+      <header class="app-header">
+        <p class="kicker">Incident Management System</p>
+        <h1>Operations dashboard</h1>
+        <p class="header-note">Monitor active incidents, review raw signals, and capture RCA before closure.</p>
       </header>
 
-      <main class="workspace">
-        <aside class="feed-panel">
-          <div class="panel-heading">
+      <section
+        class="stats-panel"
+        hx-get="/ui/overview"
+        hx-trigger="load, every 5s"
+        hx-target="this"
+        hx-swap="innerHTML"
+      ></section>
+
+      <main class="layout">
+        <aside class="list-panel">
+          <div class="panel-header">
             <div>
-              <p class="eyebrow">Live feed</p>
-              <h2>Active incidents</h2>
+              <p class="kicker">Active queue</p>
+              <h2>Incidents</h2>
             </div>
             <span>Sorted by severity</span>
           </div>
@@ -43,8 +43,8 @@
 
         <section id="detail-panel" class="detail-panel">
           <div class="empty-detail">
-            <p>Select an incident from the live feed.</p>
-            <span>The RCA workflow and raw signal audit trail will appear here.</span>
+            <h3>Select an incident</h3>
+            <p>The selected incident will show status, linked raw signals, and the RCA form.</p>
           </div>
         </section>
       </main>

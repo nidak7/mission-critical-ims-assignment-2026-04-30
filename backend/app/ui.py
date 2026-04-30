@@ -41,22 +41,22 @@ def format_duration(seconds: float | None) -> str:
 def render_overview(health: dict[str, Any], incidents: list[dict[str, Any]]) -> str:
     p0_count = sum(1 for item in incidents if item["severity"] == "P0")
     return f"""
-    <div class="kpi-rail">
-      <section>
-        <span>Queue depth</span>
-        <strong>{health["queue_depth"]}</strong>
+    <div class="metrics-grid">
+      <section class="metric-card">
+        <span class="metric-label">Queue depth</span>
+        <strong class="metric-value">{health["queue_depth"]}</strong>
       </section>
-      <section>
-        <span>Signals / sec</span>
-        <strong>{health["throughput_per_second"]:.2f}</strong>
+      <section class="metric-card">
+        <span class="metric-label">Signals / sec</span>
+        <strong class="metric-value">{health["throughput_per_second"]:.2f}</strong>
       </section>
-      <section>
-        <span>Active incidents</span>
-        <strong>{len(incidents)}</strong>
+      <section class="metric-card">
+        <span class="metric-label">Active incidents</span>
+        <strong class="metric-value">{len(incidents)}</strong>
       </section>
-      <section>
-        <span>P0s in play</span>
-        <strong>{p0_count}</strong>
+      <section class="metric-card">
+        <span class="metric-label">P0 incidents</span>
+        <strong class="metric-value">{p0_count}</strong>
       </section>
     </div>
     """
@@ -66,8 +66,10 @@ def render_incident_feed(incidents: list[dict[str, Any]]) -> str:
     if not incidents:
         return """
         <div class="empty-state">
-          <p>No active incidents.</p>
-          <span>Post signals to <code>/api/signals</code> or run the sample scenario to populate the dashboard.</span>
+          <div>
+            <h3>No active incidents</h3>
+            <p>Run the sample scenario or post signals to <code>/api/signals</code>.</p>
+          </div>
         </div>
         """
 
@@ -82,10 +84,10 @@ def render_incident_feed(incidents: list[dict[str, Any]]) -> str:
               hx-target="#detail-panel"
               hx-swap="innerHTML"
             >
-              <span class="eyebrow">{incident["severity"]} • {escape(incident["component_type"])}</span>
+              <span class="kicker">{incident["severity"]} / {escape(incident["component_type"])}</span>
               <strong>{escape(incident["component_id"])}</strong>
               <p>{escape(incident["title"])}</p>
-              <small>{incident["signal_count"]} signals • {escape(incident["status"])}</small>
+              <small>{incident["signal_count"]} signals / {escape(incident["status"])}</small>
             </button>
             """
         )
@@ -96,22 +98,23 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
     if detail is None:
         return """
         <div class="empty-detail">
-          <p>Select an incident from the live feed.</p>
-          <span>The detail pane will show linked raw signals, lifecycle controls, and the RCA form.</span>
+          <div>
+            <h3>Select an incident</h3>
+            <p>The detail pane will show status, linked raw signals, and RCA fields.</p>
+          </div>
         </div>
         """
 
-    severity_class = SEVERITY_CLASSES[detail["severity"]]
     rca = detail.get("rca") or {}
     signal_markup = "".join(
         f"""
-        <article class="signal-line">
-          <header>
+        <article class="signal-card">
+          <header class="signal-head">
             <strong>{escape(signal["component_id"])}</strong>
             <time>{format_ts(signal["observed_at"])}</time>
           </header>
-          <p>{escape(signal["message"])}</p>
-          <small>{escape(signal["signal_kind"])} • metadata keys: {', '.join(sorted(signal["metadata"].keys())) or 'none'}</small>
+          <p class="signal-message">{escape(signal["message"])}</p>
+          <small class="signal-meta">{escape(signal["signal_kind"])} / metadata keys: {', '.join(sorted(signal["metadata"].keys())) or 'none'}</small>
         </article>
         """
         for signal in detail.get("raw_signals", [])[-12:]
@@ -124,58 +127,62 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
     return f"""
     <section class="detail-shell" hx-get="/ui/incidents/{detail["id"]}" hx-trigger="every 5s" hx-target="this" hx-swap="innerHTML">
       {banner_markup}
-      <header class="detail-hero {severity_class}">
+      <header class="detail-summary">
         <div>
-          <span class="eyebrow">{escape(detail["severity"])} • {escape(detail["component_type"])}</span>
-          <h2>{escape(detail["component_id"])}</h2>
+          <p class="kicker">{escape(detail["severity"])} / {escape(detail["component_type"])}</p>
+          <h2 class="incident-title">{escape(detail["component_id"])}</h2>
           <p>{escape(detail["title"])}</p>
         </div>
-        <dl>
-          <div><dt>Status</dt><dd>{escape(detail["status"])}</dd></div>
-          <div><dt>Signals</dt><dd>{detail["signal_count"]}</dd></div>
-          <div><dt>MTTR</dt><dd>{format_duration(detail.get("mttr_seconds"))}</dd></div>
-          <div><dt>Alert route</dt><dd>{escape(detail["alert_channel"])}</dd></div>
+        <dl class="summary-grid">
+          <div class="summary-item"><dt>Status</dt><dd>{escape(detail["status"])}</dd></div>
+          <div class="summary-item"><dt>Signals</dt><dd>{detail["signal_count"]}</dd></div>
+          <div class="summary-item"><dt>MTTR</dt><dd>{format_duration(detail.get("mttr_seconds"))}</dd></div>
+          <div class="summary-item"><dt>Alert route</dt><dd>{escape(detail["alert_channel"])}</dd></div>
         </dl>
       </header>
 
       <section class="status-actions">
         <form hx-post="/ui/incidents/{detail["id"]}/status" hx-target="#detail-panel" hx-swap="innerHTML">
           <input type="hidden" name="status" value="INVESTIGATING">
-          <button type="submit">Mark Investigating</button>
+          <button class="action-button secondary" type="submit">Mark Investigating</button>
         </form>
         <form hx-post="/ui/incidents/{detail["id"]}/status" hx-target="#detail-panel" hx-swap="innerHTML">
           <input type="hidden" name="status" value="RESOLVED">
-          <button type="submit">Mark Resolved</button>
+          <button class="action-button secondary" type="submit">Mark Resolved</button>
         </form>
         <form hx-post="/ui/incidents/{detail["id"]}/status" hx-target="#detail-panel" hx-swap="innerHTML">
           <input type="hidden" name="status" value="CLOSED">
-          <button type="submit">Close Incident</button>
+          <button class="action-button" type="submit">Close Incident</button>
         </form>
       </section>
 
-      <section class="detail-columns">
-        <div class="signal-stream">
-          <div class="section-heading">
-            <h3>Linked raw signals</h3>
-            <span>Querying the raw JSONL audit sink</span>
+      <section class="detail-grid">
+        <div class="detail-section">
+          <div class="section-header">
+            <h3 class="section-title">Linked raw signals</h3>
+            <span>Latest 12 entries</span>
           </div>
-          {signal_markup}
+          <div class="signal-stream">
+            {signal_markup}
+          </div>
         </div>
 
-        <div class="rca-panel">
-          <div class="section-heading">
-            <h3>Root cause analysis</h3>
-            <span>Required before closing the incident</span>
+        <div class="detail-section">
+          <div class="section-header">
+            <h3 class="section-title">Root cause analysis</h3>
+            <span>Required before closing</span>
           </div>
           <form class="rca-form" hx-post="/ui/incidents/{detail["id"]}/rca" hx-target="#detail-panel" hx-swap="innerHTML">
-            <label>
-              <span>Incident start</span>
-              <input type="datetime-local" name="start_time" value="{format_dt_input(rca.get("start_time") or detail["first_signal_at"])}" required>
-            </label>
-            <label>
-              <span>Incident end</span>
-              <input type="datetime-local" name="end_time" value="{format_dt_input(rca.get("end_time") or detail["last_signal_at"])}" required>
-            </label>
+            <div class="form-grid">
+              <label>
+                <span>Incident start</span>
+                <input type="datetime-local" name="start_time" value="{format_dt_input(rca.get("start_time") or detail["first_signal_at"])}" required>
+              </label>
+              <label>
+                <span>Incident end</span>
+                <input type="datetime-local" name="end_time" value="{format_dt_input(rca.get("end_time") or detail["last_signal_at"])}" required>
+              </label>
+            </div>
             <label>
               <span>Root cause category</span>
               <select name="root_cause_category" required>
@@ -190,7 +197,7 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
               <span>Prevention steps</span>
               <textarea name="prevention_steps" rows="4" required>{escape(rca.get("prevention_steps", ""))}</textarea>
             </label>
-            <button type="submit">Save RCA</button>
+            <button class="primary-button" type="submit">Save RCA</button>
           </form>
         </div>
       </section>
