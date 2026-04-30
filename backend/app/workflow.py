@@ -22,7 +22,7 @@ class IncidentState(ABC):
         if target not in self.allowed_next:
             raise TransitionError(f"{self.status.value} cannot transition to {target.value}.")
         if target is WorkItemStatus.CLOSED and not rca_complete:
-            raise TransitionError("Work item cannot be CLOSED until a complete RCA is submitted.")
+            raise TransitionError("Complete RCA before closing incident.")
 
 
 class OpenState(IncidentState):

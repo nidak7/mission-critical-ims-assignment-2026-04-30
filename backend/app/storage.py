@@ -250,8 +250,7 @@ class SqliteIncidentStore:
                     raise KeyError(f"Incident {incident_id} not found.")
 
                 submitted_at = utcnow()
-                first_signal_at = iso_to_dt(incident["first_signal_at"])
-                mttr_seconds = (submitted_at - first_signal_at).total_seconds() if first_signal_at else None
+                mttr_seconds = (rca.end_time - rca.start_time).total_seconds()
 
                 await db.execute(
                     """

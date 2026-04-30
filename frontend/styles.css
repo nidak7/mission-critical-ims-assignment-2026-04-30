@@ -33,6 +33,7 @@ body {
     linear-gradient(180deg, #030304 0%, #07070a 100%);
   color: var(--text);
   font-family: "Segoe UI", Tahoma, sans-serif;
+  color-scheme: dark;
 }
 
 button,
@@ -254,6 +255,7 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  align-items: center;
 }
 
 .status-actions form {
@@ -283,6 +285,13 @@ textarea {
 .primary-button:hover {
   border-color: var(--purple-bright);
   box-shadow: 0 0 0 1px rgba(189, 147, 249, 0.2), 0 0 18px var(--purple-glow);
+}
+
+.action-button:disabled,
+.primary-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+  box-shadow: none;
 }
 
 .detail-grid {
@@ -335,7 +344,7 @@ textarea {
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 
@@ -377,6 +386,12 @@ textarea {
 .banner-error {
   background: var(--error-bg);
   color: var(--error-text);
+}
+
+.closed-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .empty-detail,

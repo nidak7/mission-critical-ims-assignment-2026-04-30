@@ -35,7 +35,7 @@ class ServiceFlowTests(unittest.IsolatedAsyncioTestCase):
                 component_type=ComponentType.CACHE,
                 message=f"Cache timeout burst #{index}",
             )
-            for index in range(5)
+            for index in range(100)
         ]
 
         for signal in signals:
@@ -44,8 +44,59 @@ class ServiceFlowTests(unittest.IsolatedAsyncioTestCase):
         await self.service.queue.join()
         incidents = await self.service.list_incidents()
         self.assertEqual(len(incidents), 1)
-        self.assertEqual(incidents[0].signal_count, 5)
+        self.assertEqual(incidents[0].signal_count, 100)
 
         detail = await self.service.fetch_incident_detail(incidents[0].id)
         self.assertIsNotNone(detail)
-        self.assertEqual(len(detail.raw_signals), 5)
+        self.assertEqual(len(detail.raw_signals), 100)
+
+    async def test_different_components_create_distinct_incidents_with_expected_routes(self) -> None:
+        signals = [
+            SignalPayload(
+                component_id="RDBMS_PRIMARY_01",
+                component_type=ComponentType.RDBMS,
+                message="Primary database is refusing connections from the API pool.",
+            ),
+            SignalPayload(
+                component_id="MCP_HOST_02",
+                component_type=ComponentType.MCP_HOST,
+                message="MCP host lost downstream connectivity and is returning tool failures.",
+            ),
+            SignalPayload(
+                component_id="CACHE_CLUSTER_01",
+                component_type=ComponentType.CACHE,
+                message="Redis latency is climbing across the primary shard.",
+            ),
+        ]
+
+        for signal in signals:
+            await self.service.enqueue_signal(signal)
+
+        await self.service.queue.join()
+        incidents = await self.service.list_incidents()
+
+        self.assertEqual(len(incidents), 3)
+        self.assertEqual(
+            [(incident.component_id, incident.severity.value, incident.alert_channel) for incident in incidents],
+            [
+                ("RDBMS_PRIMARY_01", "P0", "pagerduty://db-primary"),
+                ("MCP_HOST_02", "P1", "slack://mcp-hosts"),
+                ("CACHE_CLUSTER_01", "P2", "slack://cache-ops"),
+            ],
+        )
+
+    async def test_health_snapshot_reports_active_incidents_and_throughput(self) -> None:
+        await self.service.enqueue_signal(
+            SignalPayload(
+                component_id="API_EDGE_01",
+                component_type=ComponentType.API,
+                message="Error rate is rising sharply on the public API edge.",
+            )
+        )
+
+        await self.service.queue.join()
+        health = await self.service.health()
+
+        self.assertTrue(health.ok)
+        self.assertEqual(health.active_incidents, 1)
+        self.assertGreater(health.throughput_per_second, 0)

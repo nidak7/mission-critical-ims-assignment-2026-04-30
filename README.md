@@ -1,49 +1,66 @@
 # Incident Management System
 
-This repository contains my submission for the Infrastructure / SRE intern assignment.
+Submission repo for the Infrastructure / SRE intern assignment.
 
 GitHub: [https://github.com/nidak7/mission-critical-ims-assignment-2026-04-30](https://github.com/nidak7/mission-critical-ims-assignment-2026-04-30)
 
-## Overview
+## What it does
 
-The project is a small Incident Management System built around three main ideas:
+This project ingests high-volume failure signals, groups repeated signals for the same component into one incident, stores raw payloads separately from structured incident records, and drives the incident through:
 
-- ingest signals asynchronously
-- group repeated signals from the same component into a single incident
-- drive the incident through a simple workflow until RCA is completed and the incident can be closed
+`OPEN -> INVESTIGATING -> RESOLVED -> CLOSED`
 
-The application includes a backend API, a lightweight dashboard, sample data, tests, and local packaging through Docker Compose.
+An incident cannot be closed until a valid RCA is saved.
 
-## Tech stack
+## Stack
 
 - FastAPI
 - asyncio
 - SQLite
 - HTMX
+- JSONL raw signal store
+- Docker Compose
 
-## Repository structure
+## Architecture
 
-- `backend/` application code, workflow logic, storage, and tests
-- `frontend/` dashboard assets
-- `sample-data/` demo/reset scripts
-- `docs/` supporting material, including the PDF generator
+```mermaid
+flowchart LR
+    A[Signals] --> B[FastAPI Ingestion API]
+    B --> C[Rate Limiter]
+    C --> D[Bounded Async Queue]
+    D --> E[Worker Pool]
+    E --> F[Alert Strategy Router]
+    E --> G[SQLite Incident Store]
+    E --> H[JSONL Raw Signal Store]
+    E --> I[Timeseries Aggregates]
+    G --> J[HTMX Dashboard]
+    H --> J
+```
+
+## Storage split
+
+- SQLite holds the structured source of truth: incidents, status transitions, RCA, and timeseries aggregates.
+- JSONL files hold the raw signal payloads and alert audit log.
+- An in-memory cache is used for the active incident feed so the dashboard does not hit SQLite on every refresh.
 
 ## Running locally
 
-Start from a clean demo state:
+From the repo root:
 
 ```bash
 python sample-data/reset_demo_state.py
 python backend/run_server.py
 ```
 
-Then open:
+If you already have an older local server running on port `8000`, stop it before running the reset script so the demo starts from a clean state.
+
+Open:
 
 ```text
-http://localhost:8000
+http://127.0.0.1:8000
 ```
 
-To load sample incidents:
+Load the demo scenario in another terminal:
 
 ```bash
 python sample-data/send_scenario.py
@@ -55,35 +72,71 @@ python sample-data/send_scenario.py
 docker compose up --build
 ```
 
+The app is served at `http://127.0.0.1:8000`.
+
 ## Tests
 
+Run the full suite:
+
 ```bash
-python -m unittest backend.tests.test_rca_validation backend.tests.test_service_flow backend.tests.test_rate_limiter
+python -m unittest discover -s backend/tests
 ```
 
-## Expected demo flow
+## API examples
 
-1. Open the dashboard.
-2. Select `RDBMS_PRIMARY_01`.
-3. Move it to `INVESTIGATING`.
-4. Move it to `RESOLVED`.
-5. Fill in the RCA form.
-6. Close the incident.
+Create a signal:
 
-## Non-functional work included
+```bash
+curl -X POST http://127.0.0.1:8000/api/signals ^
+  -H "Content-Type: application/json" ^
+  -d "{\"component_id\":\"RDBMS_PRIMARY_01\",\"component_type\":\"RDBMS\",\"message\":\"Primary database is refusing connections from the API pool.\"}"
+```
 
-The assignment also asked for attention to operational concerns, so the following are included:
+List active incidents:
 
-- rate limiting on the ingestion endpoint
-- bounded async queue for backpressure
-- retry logic for database writes
-- transactional status updates
-- `/health` endpoint
-- throughput logging every 5 seconds
-- unit tests for RCA validation, service flow, and rate limiting
+```bash
+curl http://127.0.0.1:8000/api/incidents
+```
 
-## Notes
+Health check:
+```bash
+curl http://127.0.0.1:8000/health
+```
 
-- Structured incident and RCA data are stored in SQLite.
-- Raw signal payloads are stored separately as JSONL files.
-- The repository is public and includes the code, config, and build scripts needed to run the project.
+## Demo flow
+
+1. Reset the demo state.
+2. Start the app.
+3. Run `python sample-data/send_scenario.py`.
+4. Open the dashboard.
+5. Select `RDBMS_PRIMARY_01`.
+6. Click `Mark Investigating`.
+7. Click `Mark Resolved`.
+8. Fill the RCA form and save it.
+9. Click `Close Incident`.
+
+Expected sample incidents:
+
+- `RDBMS_PRIMARY_01` as `P0`
+- `MCP_HOST_02` as `P1`
+- `CACHE_CLUSTER_01` as `P2`
+
+## Reliability and non-functional work
+
+- Async ingestion with a bounded in-memory queue
+- Rate limiting on `/api/signals`
+- Debouncing/grouping by component so bursts do not create duplicate incidents
+- Retry wrapper for SQLite writes
+- Transactional status transitions
+- Throughput logging every 5 seconds
+- `/health` endpoint for basic service checks
+
+## Backpressure
+
+The ingestion endpoint does not write directly to SQLite. Signals are accepted into a bounded async queue and processed by workers. If the rate limiter trips, the API returns `429`. If the queue is saturated, the API returns `503` and sheds load instead of blocking until the process becomes unstable.
+
+## Known limitations
+
+- SQLite is fine for this assignment, but not the long-term choice for a real multi-node IMS.
+- Raw signal storage is file-based JSONL for simplicity.
+- The dashboard is intentionally minimal and focused on the assignment flow rather than full operator tooling.

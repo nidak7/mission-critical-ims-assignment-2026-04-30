@@ -3,3 +3,4 @@ uvicorn==0.46.0
 aiosqlite==0.22.1
 python-multipart==0.0.27
 pydantic==2.13.3
+httpx==0.28.1

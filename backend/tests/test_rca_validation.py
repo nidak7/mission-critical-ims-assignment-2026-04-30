@@ -6,6 +6,8 @@ from datetime import timedelta
 from pathlib import Path
 from uuid import uuid4
 
+from pydantic import ValidationError
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -52,8 +54,24 @@ class RcaValidationTests(unittest.IsolatedAsyncioTestCase):
     async def test_cannot_close_without_rca(self) -> None:
         await self.store.transition_incident(self.incident_id, WorkItemStatus.INVESTIGATING)
         await self.store.transition_incident(self.incident_id, WorkItemStatus.RESOLVED)
-        with self.assertRaises(TransitionError):
+        with self.assertRaises(TransitionError) as ctx:
             await self.store.transition_incident(self.incident_id, WorkItemStatus.CLOSED)
+        self.assertEqual(str(ctx.exception), "Complete RCA before closing incident.")
+
+    async def test_cannot_close_with_incomplete_rca(self) -> None:
+        await self.store.transition_incident(self.incident_id, WorkItemStatus.INVESTIGATING)
+        await self.store.transition_incident(self.incident_id, WorkItemStatus.RESOLVED)
+        with self.assertRaises(TransitionError):
+            await self.store.save_rca(
+                self.incident_id,
+                RCARecord(
+                    start_time=utcnow() - timedelta(minutes=14),
+                    end_time=utcnow() - timedelta(minutes=2),
+                    root_cause_category="   ",
+                    fix_applied="Failover was forced to the standby node and connection pools were recycled.",
+                    prevention_steps="Add replica health prechecks and tighten failover alert thresholds.",
+                ),
+            )
 
     async def test_can_close_after_complete_rca(self) -> None:
         await self.store.transition_incident(self.incident_id, WorkItemStatus.INVESTIGATING)
@@ -70,6 +88,16 @@ class RcaValidationTests(unittest.IsolatedAsyncioTestCase):
         )
         summary = await self.store.transition_incident(self.incident_id, WorkItemStatus.CLOSED)
         self.assertEqual(summary.status, WorkItemStatus.CLOSED)
+
+    def test_rejects_end_before_start(self) -> None:
+        with self.assertRaises(ValidationError):
+            RCARecord(
+                start_time=utcnow(),
+                end_time=utcnow() - timedelta(minutes=30),
+                root_cause_category="Dependency Failure",
+                fix_applied="Failover was forced to the standby node and connection pools were recycled.",
+                prevention_steps="Add replica health prechecks and tighten failover alert thresholds.",
+            )
 
 
 if __name__ == "__main__":

@@ -95,8 +95,13 @@ def render_incident_feed(incidents: list[dict[str, Any]]) -> str:
 
 
 def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, banner_kind: str = "info") -> str:
+    banner_markup = ""
+    if banner:
+        banner_markup = f'<div class="banner banner-{banner_kind}">{escape(banner)}</div>'
+
     if detail is None:
-        return """
+        return f"""
+        {banner_markup}
         <div class="empty-detail">
           <div>
             <h3>Select an incident</h3>
@@ -120,9 +125,7 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
         for signal in detail.get("raw_signals", [])[-12:]
     ) or '<p class="muted">No raw signals recorded yet.</p>'
 
-    banner_markup = ""
-    if banner:
-        banner_markup = f'<div class="banner banner-{banner_kind}">{escape(banner)}</div>'
+    status_actions_markup = render_status_actions(detail)
 
     return f"""
     <section class="detail-shell">
@@ -142,27 +145,7 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
       </header>
 
       <section class="status-actions">
-        <form hx-post="/ui/incidents/{detail["id"]}/status" hx-target="#detail-panel" hx-swap="innerHTML">
-          <input type="hidden" name="status" value="INVESTIGATING">
-          <button class="action-button secondary" type="submit">Mark Investigating</button>
-        </form>
-        <form hx-post="/ui/incidents/{detail["id"]}/status" hx-target="#detail-panel" hx-swap="innerHTML">
-          <input type="hidden" name="status" value="RESOLVED">
-          <button class="action-button secondary" type="submit">Mark Resolved</button>
-        </form>
-        <form hx-post="/ui/incidents/{detail["id"]}/status" hx-target="#detail-panel" hx-swap="innerHTML">
-          <input type="hidden" name="status" value="CLOSED">
-          <button class="action-button" type="submit">Close Incident</button>
-        </form>
-        <button
-          class="action-button secondary"
-          hx-get="/ui/incidents/{detail["id"]}"
-          hx-target="#detail-panel"
-          hx-swap="innerHTML"
-          type="button"
-        >
-          Refresh
-        </button>
+        {status_actions_markup}
       </section>
 
       <section class="detail-grid">
@@ -181,14 +164,20 @@ def render_detail(detail: dict[str, Any] | None, *, banner: str | None = None, b
             <h3 class="section-title">Root cause analysis</h3>
             <span>Required before closing</span>
           </div>
-          <form class="rca-form" hx-post="/ui/incidents/{detail["id"]}/rca" hx-target="#detail-panel" hx-swap="innerHTML">
+          <form
+            class="rca-form"
+            hx-post="/ui/incidents/{detail["id"]}/rca"
+            hx-target="#detail-panel"
+            hx-swap="innerHTML"
+            hx-disabled-elt="find button"
+          >
             <div class="form-grid">
               <label>
-                <span>Incident start</span>
+                <span>Incident start (UTC)</span>
                 <input type="datetime-local" name="start_time" value="{format_dt_input(rca.get("start_time") or detail["first_signal_at"])}" required>
               </label>
               <label>
-                <span>Incident end</span>
+                <span>Incident end (UTC)</span>
                 <input type="datetime-local" name="end_time" value="{format_dt_input(rca.get("end_time") or detail["last_signal_at"])}" required>
               </label>
             </div>
@@ -228,3 +217,67 @@ def render_category_options(selected: str | None) -> str:
         is_selected = ' selected="selected"' if selected == category else ""
         options.append(f'<option value="{escape(category)}"{is_selected}>{escape(category)}</option>')
     return "".join(options)
+
+
+def render_status_actions(detail: dict[str, Any]) -> str:
+    incident_id = detail["id"]
+    status = detail["status"]
+
+    refresh_button = f"""
+    <button
+      class="action-button secondary"
+      hx-get="/ui/incidents/{incident_id}"
+      hx-target="#detail-panel"
+      hx-swap="innerHTML"
+      type="button"
+    >
+      Refresh
+    </button>
+    """
+
+    if status == "OPEN":
+        return (
+            f"""
+            <form
+              hx-post="/ui/incidents/{incident_id}/status"
+              hx-target="#detail-panel"
+              hx-swap="innerHTML"
+              hx-disabled-elt="find button"
+            >
+              <button class="action-button secondary" type="submit">Mark Investigating</button>
+              <input type="hidden" name="status" value="INVESTIGATING">
+            </form>
+            """
+            + refresh_button
+        )
+    if status == "INVESTIGATING":
+        return (
+            f"""
+            <form
+              hx-post="/ui/incidents/{incident_id}/status"
+              hx-target="#detail-panel"
+              hx-swap="innerHTML"
+              hx-disabled-elt="find button"
+            >
+              <button class="action-button secondary" type="submit">Mark Resolved</button>
+              <input type="hidden" name="status" value="RESOLVED">
+            </form>
+            """
+            + refresh_button
+        )
+    if status == "RESOLVED":
+        return (
+            f"""
+            <form
+              hx-post="/ui/incidents/{incident_id}/status"
+              hx-target="#detail-panel"
+              hx-swap="innerHTML"
+              hx-disabled-elt="find button"
+            >
+              <button class="action-button" type="submit">Close Incident</button>
+              <input type="hidden" name="status" value="CLOSED">
+            </form>
+            """
+            + refresh_button
+        )
+    return '<p class="closed-note">Incident closed</p>' + refresh_button

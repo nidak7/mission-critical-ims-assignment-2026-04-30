@@ -11,6 +11,8 @@ backend/storage/*.db-shm
 backend/storage/*.db-wal
 backend/storage/*.log
 backend/storage/raw/*.jsonl
+backend/storage/api-test-*/
+backend/storage/test-app-*/
 backend/storage/service-test-*/
 backend/storage/tmp*/
-*Infrastructure ∕ SRE Intern Assignment.pdf
+*Infrastructure*Assignment.pdf

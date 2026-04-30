@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import ValidationError
 
 from .models import RCARecord, SignalPayload, StatusChangeRequest, WorkItemStatus
 from .service import BackpressureError, build_service
@@ -47,7 +48,10 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health() -> dict:
-        return (await service.health()).model_dump(mode="json")
+        snapshot = await service.health()
+        if not snapshot.ok:
+            raise HTTPException(status_code=503, detail={"status": "DOWN"})
+        return {"status": "UP"}
 
     @app.post("/api/signals", status_code=status.HTTP_202_ACCEPTED)
     async def ingest_signal(request: Request, signal: SignalPayload) -> dict[str, str]:
@@ -122,6 +126,10 @@ def create_app() -> FastAPI:
             detail = await service.fetch_incident_detail(incident_id)
             banner = f"Incident moved to {status_value.value}."
             banner_kind = "success"
+        except KeyError:
+            detail = None
+            banner = "Incident not found."
+            banner_kind = "error"
         except (ValueError, TransitionError) as exc:
             detail = await service.fetch_incident_detail(incident_id)
             banner = str(exc)
@@ -142,6 +150,14 @@ def create_app() -> FastAPI:
             detail = await service.submit_rca(incident_id, rca)
             banner = "RCA saved. Close is now permitted once the incident is resolved."
             banner_kind = "success"
+        except KeyError:
+            detail = None
+            banner = "Incident not found."
+            banner_kind = "error"
+        except ValidationError as exc:
+            detail = await service.fetch_incident_detail(incident_id)
+            banner = exc.errors()[0]["msg"]
+            banner_kind = "error"
         except Exception as exc:
             detail = await service.fetch_incident_detail(incident_id)
             banner = str(exc)
