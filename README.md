@@ -57,7 +57,7 @@ If you already have an older local server running on port `8000`, stop it before
 Open:
 
 ```text
-http://127.0.0.1:8000
+http://localhost:8000
 ```
 
 Load the demo scenario in another terminal:
@@ -72,7 +72,11 @@ python sample-data/send_scenario.py
 docker compose up --build
 ```
 
-The app is served at `http://127.0.0.1:8000`.
+The app is served at `http://localhost:8000`.
+
+## Final submission PDF
+
+`docs/Nida Farheen Khan - Infrastructure SRE Intern Assignment.pdf`
 
 ## Tests
 
@@ -87,7 +91,7 @@ python -m unittest discover -s backend/tests
 Create a signal:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/signals ^
+curl -X POST http://localhost:8000/api/signals ^
   -H "Content-Type: application/json" ^
   -d "{\"component_id\":\"RDBMS_PRIMARY_01\",\"component_type\":\"RDBMS\",\"message\":\"Primary database is refusing connections from the API pool.\"}"
 ```
@@ -95,12 +99,12 @@ curl -X POST http://127.0.0.1:8000/api/signals ^
 List active incidents:
 
 ```bash
-curl http://127.0.0.1:8000/api/incidents
+curl http://localhost:8000/api/incidents
 ```
 
 Health check:
 ```bash
-curl http://127.0.0.1:8000/health
+curl http://localhost:8000/health
 ```
 
 ## Demo flow
@@ -130,6 +134,8 @@ Expected sample incidents:
 - Transactional status transitions
 - Throughput logging every 5 seconds
 - `/health` endpoint for basic service checks
+- Frontend gating for invalid workflow transitions
+- Automated tests for API, workflow, RCA, MTTR, rate limiting, and dashboard state
 
 ## Backpressure
 
